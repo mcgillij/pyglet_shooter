@@ -12,7 +12,7 @@ import math
 from bulletml.collision import collides_all, collides
 
 pyglet.options['debug_gl'] = False
-FPS = 60
+FPS = 30
 BADDIEMINSPEED = 1
 BADDIEMAXSPEED = 8
 ADDNEWBADDIERATE = 50
@@ -49,8 +49,8 @@ class Game(pyglet.window.Window):
         self.filenames = []
         for myfile in glob.glob(os.path.join('patterns/', "*.xml")):
             self.filenames.append(myfile)
-        filename = self.filenames[1]
-        mob_filename = self.filenames[0]
+        filename = self.filenames[0]
+        mob_filename = self.filenames[1]
         self.doc = bulletml.BulletML.FromDocument(open(filename, "rU"))
         self.mob_doc = bulletml.BulletML.FromDocument(open(mob_filename, "rU"))
         self.sprites = []
@@ -88,7 +88,6 @@ class Game(pyglet.window.Window):
         self.player_bullets_active.add(source)
         return
 
-
     def update(self, dt):
         #self.player.update(dt)
         self.player.x, self.player.y = self.mouse_pos
@@ -104,12 +103,14 @@ class Game(pyglet.window.Window):
         
         for s in self.sprites[:]:
             s.update(dt)
-            if s.shot_timer == 5 and not s.offscreen:
-                    s.bullets = bulletml.Bullet.FromDocument(self.mob_doc, x=s.x/2, y=s.y/2, target=self.player_target, rank=0.5)
-                    s.bullets.vanished = True
-                    self.mob_bullets_active.add(s.bullets)
+            #if s.shot_timer == 5 and not s.offscreen:
             if s.offscreen:
                 self.sprites.remove(s)
+            else:
+                #if s.shot_timer == 5:
+                s.bullets = bulletml.Bullet.FromDocument(self.mob_doc, x=s.x/2, y=s.y/2, target=self.player_target, rank=1)
+                s.bullets.vanished = True
+                self.mob_bullets_active.add(s.bullets)
 
         m_active = list(self.mob_bullets_active)
         for obj in m_active:
@@ -154,7 +155,7 @@ class Game(pyglet.window.Window):
         blue = (0, 0, 1, 1)
         black = (0, 0, 0 , 1)
         baddieAddCounter = 0
-        #fps_display = pyglet.clock.ClockDisplay()
+        fps_display = pyglet.clock.ClockDisplay()
         mob_image = pyglet.image.load('baddie.png')
         mob_image.anchor_x = mob_image.width/2
         mob_image.anchor_y = mob_image.height/2
@@ -167,9 +168,9 @@ class Game(pyglet.window.Window):
                 baddieAddCounter = 0
                 newBaddie = Mob(mob_image, random.randint(0, self.width),self.height, self.sprite_batch )
                 #newBaddie = Mob(mob_image, self.width/2,self.height, self.sprite_batch )
-                newBaddie.bullets = bulletml.Bullet.FromDocument(self.mob_doc, x=newBaddie.x/2, y=newBaddie.y/2, target=self.player_target, rank=0.5)
-                newBaddie.bullets.vanished = True
-                self.mob_bullets_active.add(newBaddie.bullets)
+#                newBaddie.bullets = bulletml.Bullet.FromDocument(self.mob_doc, x=newBaddie.x/2, y=newBaddie.y/2, target=self.player_target, rank=0.5)
+#                newBaddie.bullets.vanished = True
+#                self.mob_bullets_active.add(newBaddie.bullets)
                 self.sprites.append(newBaddie)
 
             bullet_batch = pyglet.graphics.Batch()
@@ -191,10 +192,10 @@ class Game(pyglet.window.Window):
                         c.append(255)
                         c.append(255)
                         c.append(0)
-            vl = pyglet.graphics.vertex_list(len(vert_l)/2, 
-                                             ('v2f\static', vert_l), 
-                                             ('c3B\static', c) 
-                                             )
+            #vl = pyglet.graphics.vertex_list(len(vert_l)/2, 
+                                           #  ('v2f\static', vert_l), 
+                                           #  ('c3B\static', c) 
+                                          #   )
             bullet_batch.add(len(vert_l)/2, pyglet.gl.GL_POINTS, None, ('v2f\static', vert_l ) , ('c3B\static', c))
             c = []
             vert_l = []
@@ -214,13 +215,14 @@ class Game(pyglet.window.Window):
                         c.append(255)
                         c.append(0)
                         c.append(255)
-            vl = pyglet.graphics.vertex_list(len(vert_l)/2, 'v2f' )
-            vl.vertices = vert_l
+            #vl = pyglet.graphics.vertex_list(len(vert_l)/2, 'v2f' )
+            #vl.vertices = vert_l
             pyglet.gl.glPointSize(4.0)
             bullet_batch.add(len(vert_l)/2, pyglet.gl.GL_POINTS, None, ('v2f\static', vert_l ), ('c3B\static', c))
             self.clear()
             bullet_batch.draw()
             self.sprite_batch.draw()
+            fps_display.draw()
             self.flip()
 def distance(a, b):
     return math.sqrt((a.x/2-b.x)**2 + (a.y/2-b.y)**2)
